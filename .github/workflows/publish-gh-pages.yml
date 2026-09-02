@@ -1,0 +1,44 @@
+name: Publish build to gh-pages branch
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          keep_files: false
