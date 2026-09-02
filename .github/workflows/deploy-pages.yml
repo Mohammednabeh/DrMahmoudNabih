@@ -20,7 +20,11 @@ jobs:
       - name: Install & Build (if package.json has build)
         run: |
           if [ -f package.json ] && grep -q "\"build\"" package.json; then
-            npm ci
+            if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+              npm ci
+            else
+              npm install
+            fi
             npm run build
           else
             echo "No build script detected; skipping build step"
