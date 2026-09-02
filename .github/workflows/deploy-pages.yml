@@ -17,15 +17,19 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install & Build (if package.json has build)
+      - name: Install & Build (if package.json has build and no build output)
         run: |
           if [ -f package.json ] && grep -q "\"build\"" package.json; then
-            if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-              npm ci
+            if [ -d dist ] || [ -d build ] || [ -d public ]; then
+              echo "Build artifacts present; skipping build"
             else
-              npm install
+              if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+                npm ci
+              else
+                npm install
+              fi
+              npm run build
             fi
-            npm run build
           else
             echo "No build script detected; skipping build step"
           fi
