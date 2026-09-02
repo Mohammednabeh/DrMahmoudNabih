@@ -1,0 +1,39 @@
+﻿name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ mohammadabeh-publish-github-pages, mohammednabeh-publish-github-pages, main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (optional)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install & Build (if package.json has build)
+        run: |
+          if [ -f package.json ] && grep -q "\"build\"" package.json; then
+            npm ci
+            npm run build
+          else
+            echo "No build script detected; skipping build step"
+          fi
+
+      - name: Deploy to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: |
+            ./dist
+            ./build
+            ./public
+            ./
+          clean: true
+          token: ${{ secrets.GITHUB_TOKEN }}
