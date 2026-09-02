@@ -1,5 +1,10 @@
 ﻿name: Deploy to GitHub Pages
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 on:
   push:
     branches: [ mohammadabeh-publish-github-pages, mohammednabeh-publish-github-pages, main ]
@@ -15,21 +20,23 @@ jobs:
       - name: Setup Node (optional)
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      - name: Install & Build (if package.json has build and no build output)
+      - name: Install & Build (if package.json has build)
         run: |
           if [ -f package.json ] && grep -q "\"build\"" package.json; then
-            if [ -d dist ] || [ -d build ] || [ -d public ]; then
-              echo "Build artifacts present; skipping build"
+            echo "Building project"
+            if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+              npm ci
             else
-              if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-                npm ci
-              else
-                npm install
-              fi
-              npm run build
+              npm install
             fi
+            npm run build
+            echo "Build complete. Listing files:"
+            ls -la
+            if [ -d dist ]; then ls -la dist || true; fi
+            if [ -d build ]; then ls -la build || true; fi
+            if [ -d public ]; then ls -la public || true; fi
           else
             echo "No build script detected; skipping build step"
           fi
