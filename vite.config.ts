@@ -29,6 +29,11 @@ export default defineConfig(() => {
                   
                   const publicPath = path.resolve(__dirname, 'public/dr-mahmoud.jpg');
                   fs.writeFileSync(publicPath, buffer);
+
+                  const assetPath = path.resolve(__dirname, 'src/assets/images/dr_mahmoud_photo_1788368502061.jpg');
+                  if (fs.existsSync(path.dirname(assetPath))) {
+                    fs.writeFileSync(assetPath, buffer);
+                  }
                   
                   const distDir = path.resolve(__dirname, 'dist');
                   if (fs.existsSync(distDir)) {

@@ -99,16 +99,16 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Action Tools: Language Switcher + Framer CMS + Sleek CTA */}
+          {/* Action Tools: Language Switcher + CMS Studio + Sleek CTA */}
           <div className="hidden lg:flex items-center gap-3">
-            {/* Framer CMS Launcher / Admin Gate */}
+            {/* CMS Launcher / Admin Gate */}
             {isAdminAuthenticated ? (
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setIsCMSStudioOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 transition-colors cursor-pointer shadow-2xs"
-                  title={isEn ? "Framer CMS Studio (Unlocked)" : "لوحة التحكم (مفتوحة للإدارة)"}
-                  id="framer-cms-launcher-btn"
+                  title={isEn ? "CMS Studio (Unlocked)" : "لوحة التحكم (مفتوحة للإدارة)"}
+                  id="cms-launcher-btn"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   <span>{isEn ? 'CMS Studio' : 'إدارة المحتوى'}</span>
@@ -128,7 +128,7 @@ export const Navbar: React.FC = () => {
                 onClick={() => setIsCMSStudioOpen(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs"
                 title={isEn ? "Medical Admin Portal (Protected by PIN)" : "بوابة الإدارة الطبية (محمية برمز مرور)"}
-                id="framer-cms-launcher-btn"
+                id="cms-launcher-btn"
               >
                 <Lock className="w-3.5 h-3.5 text-slate-500" />
                 <span>{isEn ? 'Admin' : 'لوحة الإدارة'}</span>
@@ -228,7 +228,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-900 border border-emerald-200"
                 >
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>{isEn ? 'Framer CMS Studio (Unlocked)' : 'لوحة الإدارة (مفتوحة)'}</span>
+                  <span>{isEn ? 'CMS Studio (Unlocked)' : 'لوحة الإدارة (مفتوحة)'}</span>
                 </button>
                 <button
                   type="button"

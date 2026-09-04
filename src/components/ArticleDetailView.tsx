@@ -1,5 +1,7 @@
 import React from 'react';
 import { useCMS } from '../context/CMSContext';
+import { useArticleSEO } from '../hooks/useArticleSEO';
+import { ArticleSEOCard } from './ArticleSEOCard';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -13,7 +15,8 @@ import {
   CheckCircle2, 
   Share2, 
   BookmarkCheck, 
-  Printer 
+  Printer,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface ArticleDetailViewProps {
@@ -28,6 +31,9 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ slug, onBa
 
   const article = articles.find(a => a.slug === slug) || articles[0];
   const category = categories.find(c => c.id === article?.category);
+
+  // Programmatically generate and apply dynamic meta title, description, schema and OpenGraph for search engine indexing
+  const seo = useArticleSEO(article, language, siteSettings, category);
 
   // Related articles from same category
   const relatedArticles = articles
@@ -132,6 +138,31 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ slug, onBa
         </div>
       </div>
 
+      {/* Featured Header Illustration (When Available) */}
+      {article.featuredImage && (
+        <figure className="rounded-3xl overflow-hidden border border-slate-200/90 shadow-xs bg-slate-100 my-3">
+          <div className="relative">
+            <img
+              src={article.featuredImage}
+              alt={isEn ? article.titleEn : article.titleAr}
+              referrerPolicy="no-referrer"
+              className="w-full h-64 sm:h-80 md:h-96 object-cover"
+            />
+            <div className="absolute bottom-3 end-3 px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-semibold flex items-center gap-1.5 shadow-sm border border-white/20">
+              <ImageIcon className="w-3.5 h-3.5 text-blue-400" />
+              <span>{isEn ? 'Clinical Reference' : 'توثيق سريري معتمد'}</span>
+            </div>
+          </div>
+          <figcaption className="px-4 py-2.5 bg-slate-50 text-xs text-slate-500 font-medium flex items-center justify-between border-t border-slate-100">
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+              <span>{isEn ? 'Sterile Clinical Environment & Equipment Reference' : 'صورة توضيحية لبيئة ومستلزمات الحجامة المعقمة'}</span>
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">Health Literacy & Safety</span>
+          </figcaption>
+        </figure>
+      )}
+
       {/* Short Answer / Key Takeaway Box (Prominently Featured) */}
       <div className="p-6 sm:p-7 rounded-3xl bg-blue-50/60 border border-blue-100 shadow-xs space-y-2">
         <div className="flex items-center gap-2 text-blue-900 font-bold text-xs uppercase tracking-widest">
@@ -162,6 +193,36 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ slug, onBa
           .split('\n\n')
           .filter(paragraph => paragraph.trim().length > 0)
           .map((paragraph, index) => {
+            // Check for image markdown: ![caption](src)
+            const imgMatch = paragraph.trim().match(/^!\[(.*?)\]\((.*?)\)$/);
+            if (imgMatch) {
+              const caption = imgMatch[1];
+              const src = imgMatch[2];
+              return (
+                <figure key={index} className="my-7 rounded-3xl overflow-hidden bg-slate-50 border border-slate-200/90 shadow-xs">
+                  <div className="relative bg-slate-900/5">
+                    <img
+                      src={src}
+                      alt={caption || (isEn ? 'Clinical Illustration' : 'صورة توضيحية سريرية')}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-auto max-h-[460px] object-cover"
+                    />
+                  </div>
+                  {caption && (
+                    <figcaption className="p-4 bg-white border-t border-slate-100 flex items-center justify-between gap-3 text-xs sm:text-sm text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                        <span className="font-semibold text-slate-800">{caption}</span>
+                      </div>
+                      <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
+                        {isEn ? 'Clinical Reference' : 'توثيق سريري توضيحي'}
+                      </span>
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            }
+
             // Check if paragraph is a heading or bullet list
             if (paragraph.startsWith('### ') || paragraph.startsWith('## ')) {
               return (
@@ -206,6 +267,15 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ slug, onBa
         </div>
       )}
 
+      {/* Programmatic SEO & Search Indexing Metadata Card */}
+      {seo && (
+        <ArticleSEOCard 
+          seo={seo} 
+          language={language} 
+          slug={article.slug} 
+        />
+      )}
+
       {/* Medical Disclaimer inside Article */}
       <div className="p-6 rounded-3xl bg-white border border-slate-200 text-xs text-slate-600 leading-relaxed flex items-start gap-3.5 shadow-xs">
         <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
@@ -235,21 +305,32 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ slug, onBa
                   setSelectedArticleSlug(rel.slug);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="p-5 rounded-3xl bg-white border border-slate-200 hover:border-blue-300 transition-all shadow-xs hover:shadow-md cursor-pointer flex flex-col justify-between"
+                className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200 hover:border-blue-300 transition-all shadow-xs hover:shadow-md cursor-pointer flex flex-col justify-between group overflow-hidden"
               >
-                <div className="space-y-2">
+                <div className="space-y-2.5">
+                  {rel.featuredImage && (
+                    <div className="w-full h-32 rounded-2xl overflow-hidden bg-slate-100 mb-1">
+                      <img
+                        src={rel.featuredImage}
+                        alt={isEn ? rel.titleEn : rel.titleAr}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
                   <div className="text-xs text-slate-400 font-medium">
                     {rel.readingTimeMinutes} {isEn ? 'min read' : 'دقائق قراءة'}
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">
+                  <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
                     {isEn ? rel.titleEn : rel.titleAr}
                   </h3>
-                  <p className="text-xs text-slate-500 line-clamp-2">
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                     {isEn ? rel.shortAnswerEn : rel.shortAnswerAr}
                   </p>
                 </div>
-                <div className="pt-3 mt-3 border-t border-slate-100 text-xs font-bold text-blue-600">
-                  {isEn ? 'Read →' : '← قراءة'}
+                <div className="pt-3 mt-3 border-t border-slate-100 text-xs font-bold text-blue-600 flex items-center justify-between">
+                  <span>{isEn ? 'Read Article' : 'قراءة المقال'}</span>
+                  <span>{isEn ? '→' : '←'}</span>
                 </div>
               </div>
             ))}

@@ -10,7 +10,6 @@ import { ExperienceView } from './components/ExperienceView';
 import { KnowledgeCenterView } from './components/KnowledgeCenterView';
 import { FAQView } from './components/FAQView';
 import { ContactView } from './components/ContactView';
-import { CMSGuideView } from './components/CMSGuideView';
 import { CMSStudioModal } from './components/CMSStudioModal';
 import { DoctorPhotoModal } from './components/DoctorPhotoModal';
 import { AdminAuthModal } from './components/AdminAuthModal';
@@ -36,7 +35,6 @@ const AppContent: React.FC = () => {
         {activeTab === 'knowledge' && <KnowledgeCenterView />}
         {activeTab === 'faq' && <FAQView />}
         {activeTab === 'contact' && <ContactView />}
-        {activeTab === 'cms-guide' && <CMSGuideView />}
       </main>
 
       {/* Footer */}
@@ -45,7 +43,7 @@ const AppContent: React.FC = () => {
       {/* Admin Authentication Gate Modal */}
       <AdminAuthModal />
 
-      {/* Interactive Framer CMS Studio Modal */}
+      {/* Interactive CMS Studio Modal */}
       <CMSStudioModal />
 
       {/* Official Doctor Photo Modal */}

@@ -49,9 +49,6 @@ export const Footer: React.FC = () => {
                 ? 'Dedicated bilingual personal portfolio and medical cupping knowledge center of Dr. Mahmoud Ali Nabih Abdelghaney, SCFHS-registered Physiotherapy Specialist.'
                 : 'الموقع المهني والمركز المعرفي التثقيفي المعتمد للدكتور محمود علي نبيه عبد الغني، أخصائي علاج طبيعي مسجل بالهيئة السعودية للتخصصات الصحية.'}
             </p>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-blue-400 font-bold uppercase tracking-wider">
-              <span>{isEn ? 'Personal Portfolio • Non-Commercial' : 'موقع بورتفوليو مهني غير تجاري'}</span>
-            </div>
           </div>
 
           {/* Quick Portfolio Links */}
@@ -182,7 +179,7 @@ export const Footer: React.FC = () => {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/60 transition-colors cursor-pointer"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{isEn ? 'Framer CMS Studio (Unlocked)' : 'لوحة الإدارة (نشطة ومفتوحة)'}</span>
+                  <span>{isEn ? 'CMS Studio (Unlocked)' : 'لوحة الإدارة (نشطة ومفتوحة)'}</span>
                 </button>
               ) : (
                 <button
@@ -220,11 +217,7 @@ export const Footer: React.FC = () => {
               : `© ${new Date().getFullYear()} د. محمود علي نبيه عبد الغني. جميع الحقوق محفوظة.`}
           </p>
           <div className="flex items-center gap-4">
-            <button onClick={() => navigateTo('cms-guide')} className="hover:text-white underline transition-colors cursor-pointer">
-              {isEn ? 'Framer CMS Guide' : 'دليل إدارة المحتوى Framer'}
-            </button>
-            <span className="text-slate-700">|</span>
-            <button onClick={() => navigateTo('licenses')} className="hover:text-white transition-colors cursor-pointer">
+            <button onClick={() => navigateTo('licenses')} className="hover:text-white underline transition-colors cursor-pointer">
               {isEn ? 'SCFHS Verification' : 'التحقق من ترخيص الهيئة'}
             </button>
           </div>

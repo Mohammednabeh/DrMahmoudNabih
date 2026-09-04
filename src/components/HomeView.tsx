@@ -17,7 +17,6 @@ import {
   Sparkles, 
   HelpCircle,
   ExternalLink,
-  Camera,
   MessageCircle,
   Calendar
 } from 'lucide-react';
@@ -30,7 +29,6 @@ export const HomeView: React.FC = () => {
     articles, 
     setActiveTab, 
     setSelectedArticleSlug,
-    setIsPhotoModalOpen,
     openBookingModal
   } = useCMS();
   const isEn = language === 'en';
@@ -94,18 +92,6 @@ export const HomeView: React.FC = () => {
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />
-
-                {/* Quick Photo Upload Trigger */}
-                <button
-                  type="button"
-                  id="home-open-photo-modal-btn"
-                  onClick={() => setIsPhotoModalOpen(true)}
-                  title={isEn ? "Update / Replace with Authentic Photo" : "استبدال بالصورة الأصلية الحقيقية"}
-                  className="absolute top-3 end-3 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700 hover:text-blue-600 backdrop-blur-md text-[11px] font-bold shadow-md border border-white/50 flex items-center gap-1.5 transition-all opacity-80 hover:opacity-100"
-                >
-                  <Camera className="w-3.5 h-3.5 text-blue-600" />
-                  <span>{isEn ? "Authentic Photo" : "الصورة الأصلية"}</span>
-                </button>
               </div>
               
               {/* Floating Sleek Glass Overlay */}
@@ -577,10 +563,21 @@ export const HomeView: React.FC = () => {
                   setSelectedArticleSlug(article.slug);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="group p-8 rounded-3xl bg-white border border-slate-200 hover:border-blue-500/40 transition-all shadow-xs hover:shadow-md cursor-pointer flex flex-col justify-between"
+                className="group p-6 sm:p-7 rounded-3xl bg-white border border-slate-200 hover:border-blue-500/40 transition-all shadow-xs hover:shadow-md cursor-pointer flex flex-col justify-between overflow-hidden"
                 id={`latest-article-card-${article.slug}`}
               >
                 <div className="space-y-3">
+                  {article.featuredImage && (
+                    <div className="w-full h-44 rounded-2xl overflow-hidden bg-slate-100 mb-1 relative">
+                      <img
+                        src={article.featuredImage}
+                        alt={isEn ? article.titleEn : article.titleAr}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
                     <span className="px-2.5 py-1 rounded-full bg-slate-100 font-semibold text-slate-600 text-[11px]">
                       {article.readingTimeMinutes} {isEn ? 'min read' : 'دقائق قراءة'}

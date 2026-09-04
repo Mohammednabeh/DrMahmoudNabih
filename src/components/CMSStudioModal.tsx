@@ -21,7 +21,12 @@ import {
   ShieldCheck,
   LogOut,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Key,
+  Copy,
+  Eye,
+  EyeOff,
+  RefreshCw
 } from 'lucide-react';
 import { Article, FAQItem } from '../types';
 
@@ -45,7 +50,10 @@ export const CMSStudioModal: React.FC = () => {
     exportCMSData,
     setIsPhotoModalOpen,
     logoutAdmin,
-    changeAdminPin
+    changeAdminPin,
+    masterRecoveryKey,
+    updateMasterRecoveryKey,
+    verifyMasterKeyAndResetPin
   } = useCMS();
 
   const isEn = language === 'en';
@@ -65,13 +73,54 @@ export const CMSStudioModal: React.FC = () => {
   const [currentPinInput, setCurrentPinInput] = useState('');
   const [newPinInput, setNewPinInput] = useState('');
   const [confirmPinInput, setConfirmPinInput] = useState('');
+  const [forgotMode, setForgotMode] = useState(false);
+  const [masterKeyForgotInput, setMasterKeyForgotInput] = useState('');
+  const [showMasterKey, setShowMasterKey] = useState(false);
+  const [copiedMasterKey, setCopiedMasterKey] = useState(false);
+  const [newMasterKeyInput, setNewMasterKeyInput] = useState('');
+  const [isEditingMasterKey, setIsEditingMasterKey] = useState(false);
   const [pinChangeStatus, setPinChangeStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [masterKeyStatus, setMasterKeyStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   if (!isCMSStudioOpen) return null;
 
   const handlePinChange = (e: React.FormEvent) => {
     e.preventDefault();
     setPinChangeStatus(null);
+
+    if (forgotMode) {
+      if (!masterKeyForgotInput.trim() || !newPinInput.trim()) {
+        setPinChangeStatus({
+          type: 'error',
+          message: isEn ? 'Please enter your Master Recovery Key and new PIN.' : 'يرجى إدخال مفتاح الطوارئ السري والرمز الجديد.'
+        });
+        return;
+      }
+      if (newPinInput.trim() !== confirmPinInput.trim()) {
+        setPinChangeStatus({
+          type: 'error',
+          message: isEn ? 'New PIN and confirmation do not match.' : 'الرمز الجديد وتأكيد الرمز غير متطابقين.'
+        });
+        return;
+      }
+      const result = verifyMasterKeyAndResetPin(masterKeyForgotInput.trim(), newPinInput.trim());
+      if (result.success) {
+        setPinChangeStatus({
+          type: 'success',
+          message: isEn ? 'Admin PIN successfully reset via Master Key!' : 'تم التحقق من مفتاح الطوارئ السري وتعيين رمز المرور بنجاح!'
+        });
+        setNewPinInput('');
+        setConfirmPinInput('');
+        setMasterKeyForgotInput('');
+        setForgotMode(false);
+      } else {
+        setPinChangeStatus({
+          type: 'error',
+          message: result.error || (isEn ? 'Verification failed.' : 'فشل التحقق من مفتاح الطوارئ.')
+        });
+      }
+      return;
+    }
 
     if (!currentPinInput.trim() || !newPinInput.trim()) {
       setPinChangeStatus({
@@ -106,13 +155,48 @@ export const CMSStudioModal: React.FC = () => {
     }
   };
 
+  const handleCopyMasterKey = () => {
+    navigator.clipboard.writeText(masterRecoveryKey);
+    setCopiedMasterKey(true);
+    setTimeout(() => setCopiedMasterKey(false), 2500);
+  };
+
+  const handleUpdateMasterKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    setMasterKeyStatus(null);
+    if (newMasterKeyInput.trim().length < 8) {
+      setMasterKeyStatus({
+        type: 'error',
+        message: isEn ? 'Master Key must be at least 8 characters.' : 'يجب ألا يقل مفتاح الطوارئ عن 8 خانات.'
+      });
+      return;
+    }
+
+    updateMasterRecoveryKey(newMasterKeyInput.trim());
+    setMasterKeyStatus({
+      type: 'success',
+      message: isEn ? 'Master Recovery Key successfully updated!' : 'تم تحديث مفتاح الطوارئ السري بنجاح!'
+    });
+    setNewMasterKeyInput('');
+    setIsEditingMasterKey(false);
+  };
+
+  const handleGenerateRandomMasterKey = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'NABIH-';
+    for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += '-';
+    for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    setNewMasterKeyInput(code);
+  };
+
   const handleExport = () => {
     const jsonStr = exportCMSData();
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `dr-mahmoud-framer-cms-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `dr-mahmoud-cms-export-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -131,7 +215,7 @@ export const CMSStudioModal: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 font-bold text-base">
-                <span>Framer CMS Dashboard</span>
+                <span>CMS Studio</span>
                 <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-blue-900 text-blue-200">
                   Live Sync
                 </span>
@@ -150,7 +234,7 @@ export const CMSStudioModal: React.FC = () => {
             <button
               onClick={handleExport}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold uppercase tracking-wider border border-slate-700 transition-colors cursor-pointer"
-              title="Export JSON for Framer CMS"
+              title="Export JSON CMS Data"
             >
               <Download className="w-3.5 h-3.5 text-blue-400" />
               <span>{isEn ? 'Export JSON' : 'تصدير'}</span>
@@ -230,8 +314,8 @@ export const CMSStudioModal: React.FC = () => {
                   </h3>
                   <p className="text-xs text-slate-500">
                     {isEn 
-                      ? 'Simulating Framer CMS Schema: title, slug, category, readingTime, shortAnswer, content, tags, safetyWarnings' 
-                      : 'مطابقة لهيكل Framer CMS: العنوان، الرابط المختصر، التصنيف، وقت القراءة، الخلاصة، النص، التحذيرات'}
+                      ? 'Structured CMS Schema: title, slug, category, readingTime, shortAnswer, content, tags, safetyWarnings' 
+                      : 'هيكل بيانات منظم: العنوان، الرابط المختصر، التصنيف، وقت القراءة، الخلاصة، النص، التحذيرات'}
                   </p>
                 </div>
 
@@ -332,8 +416,8 @@ export const CMSStudioModal: React.FC = () => {
                   </h3>
                   <p className="text-xs text-slate-500">
                     {isEn 
-                      ? 'Simulating Framer CMS Schema: question, answer, category, order' 
-                      : 'مطابقة لهيكل Framer CMS: السؤال، الإجابة، التصنيف، الترتيب'}
+                      ? 'Structured CMS Schema: question, answer, category, order' 
+                      : 'هيكل بيانات منظم: السؤال، الإجابة، التصنيف، الترتيب'}
                   </p>
                 </div>
 
@@ -601,55 +685,247 @@ export const CMSStudioModal: React.FC = () => {
                 )}
 
                 <form onSubmit={handlePinChange} className="space-y-3 pt-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700">
-                        {isEn ? "Current PIN" : "رمز المرور الحالي"}
-                      </label>
-                      <input
-                        type="password"
-                        value={currentPinInput}
-                        onChange={(e) => setCurrentPinInput(e.target.value)}
-                        placeholder="2026"
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700">
-                        {isEn ? "New PIN" : "الرمز السري الجديد"}
-                      </label>
-                      <input
-                        type="password"
-                        value={newPinInput}
-                        onChange={(e) => setNewPinInput(e.target.value)}
-                        placeholder={isEn ? "Min 4 characters" : "4 خانات على الأقل"}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700">
-                        {isEn ? "Confirm New PIN" : "تأكيد الرمز الجديد"}
-                      </label>
-                      <input
-                        type="password"
-                        value={confirmPinInput}
-                        onChange={(e) => setConfirmPinInput(e.target.value)}
-                        placeholder={isEn ? "Re-enter new PIN" : "أعد كتابة الرمز"}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
-                      />
-                    </div>
-                  </div>
+                  {forgotMode ? (
+                    <div className="space-y-3 p-3.5 bg-blue-50/70 rounded-2xl border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                          <Key className="w-3.5 h-3.5 text-blue-600" />
+                          <span>{isEn ? "Reset via Confidential Master Recovery Key" : "استرجاع وتعيين الرمز بواسطة مفتاح الطوارئ السري"}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setForgotMode(false)}
+                          className="text-[11px] text-blue-700 hover:text-blue-900 underline font-semibold cursor-pointer"
+                        >
+                          {isEn ? "Back to standard change" : "العودة للتغيير المعتاد"}
+                        </button>
+                      </div>
 
-                  <div className="flex justify-end pt-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-700">
+                            {isEn ? "Master Recovery Key" : "مفتاح الطوارئ السري"}
+                          </label>
+                          <input
+                            type="password"
+                            value={masterKeyForgotInput}
+                            onChange={(e) => setMasterKeyForgotInput(e.target.value)}
+                            placeholder="••••••••••••••••"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-blue-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono font-bold"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-700">
+                            {isEn ? "New PIN" : "الرمز السري الجديد"}
+                          </label>
+                          <input
+                            type="password"
+                            value={newPinInput}
+                            onChange={(e) => setNewPinInput(e.target.value)}
+                            placeholder="••••"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-700">
+                            {isEn ? "Confirm New PIN" : "تأكيد الرمز الجديد"}
+                          </label>
+                          <input
+                            type="password"
+                            value={confirmPinInput}
+                            onChange={(e) => setConfirmPinInput(e.target.value)}
+                            placeholder="••••"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700">
+                            {isEn ? "Current PIN" : "رمز المرور الحالي"}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForgotMode(true);
+                              setPinChangeStatus(null);
+                            }}
+                            className="text-[10px] text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                          >
+                            {isEn ? "Forgot?" : "نسيته؟"}
+                          </button>
+                        </div>
+                        <input
+                          type="password"
+                          value={currentPinInput}
+                          onChange={(e) => setCurrentPinInput(e.target.value)}
+                          placeholder="••••"
+                          className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-700">
+                          {isEn ? "New PIN" : "الرمز السري الجديد"}
+                        </label>
+                        <input
+                          type="password"
+                          value={newPinInput}
+                          onChange={(e) => setNewPinInput(e.target.value)}
+                          placeholder={isEn ? "Min 4 characters" : "4 خانات على الأقل"}
+                          className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-700">
+                          {isEn ? "Confirm New PIN" : "تأكيد الرمز الجديد"}
+                        </label>
+                        <input
+                          type="password"
+                          value={confirmPinInput}
+                          onChange={(e) => setConfirmPinInput(e.target.value)}
+                          placeholder={isEn ? "Re-enter new PIN" : "أعد كتابة الرمز"}
+                          className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-1">
+                    {!forgotMode && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForgotMode(true);
+                          setPinChangeStatus(null);
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline font-semibold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Key className="w-3.5 h-3.5" />
+                        <span>{isEn ? "Forgot current PIN? Reset with Master Recovery Key" : "نسيت رمز المرور الحالي؟ استرجاع بواسطة مفتاح الطوارئ"}</span>
+                      </button>
+                    )}
+                    {forgotMode && <div />}
+
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ml-auto"
                     >
                       <Lock className="w-3.5 h-3.5" />
-                      <span>{isEn ? "Update Admin PIN" : "تحديث وحفظ رمز المرور"}</span>
+                      <span>{forgotMode ? (isEn ? "Verify & Reset PIN" : "تأكيد التحقق وتعيين الرمز") : (isEn ? "Update Admin PIN" : "تحديث وحفظ رمز المرور")}</span>
                     </button>
                   </div>
                 </form>
+
+                {/* Emergency Master Recovery Key Management Card */}
+                <div className="mt-5 p-4 rounded-2xl bg-slate-900 text-white space-y-3 shadow-sm border border-slate-800">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                        <Key className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                          <span>{isEn ? "Emergency Master Recovery Key" : "مفتاح الطوارئ السري الخاص بالإدارة"}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 font-mono border border-blue-700/50">
+                            {isEn ? "Confidential" : "سري وخاص"}
+                          </span>
+                        </h4>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {isEn 
+                            ? "Use this key to recover admin access if you ever forget your PIN or lack phone access."
+                            : "استخدم هذا المفتاح السري لاستعادة لوحة الإدارة في أي وقت في حال نسيان رمز المرور أو عدم توفر الجوال."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowMasterKey(!showMasterKey)}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title={showMasterKey ? (isEn ? "Hide Key" : "إخفاء المفتاح") : (isEn ? "Show Key" : "إظهار المفتاح")}
+                      >
+                        {showMasterKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        <span>{showMasterKey ? (isEn ? "Hide" : "إخفاء") : (isEn ? "Show" : "إظهار")}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleCopyMasterKey}
+                        className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        {copiedMasterKey ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedMasterKey ? (isEn ? "Copied!" : "تم النسخ!") : (isEn ? "Copy" : "نسخ")}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingMasterKey(!isEditingMasterKey)}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>{isEditingMasterKey ? (isEn ? "Close Edit" : "إلغاء التعديل") : (isEn ? "Change Key" : "تغيير المفتاح")}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Active Key Display */}
+                  <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      {isEn ? "Active Master Key:" : "المفتاح الفعّال حالياً:"}
+                    </span>
+                    <span className="font-mono text-sm font-bold tracking-wider text-emerald-400">
+                      {showMasterKey ? masterRecoveryKey : '••••••••••••••••'}
+                    </span>
+                  </div>
+
+                  {masterKeyStatus && (
+                    <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
+                      masterKeyStatus.type === 'success' ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-300' : 'bg-rose-950/60 border border-rose-800 text-rose-300'
+                    }`}>
+                      {masterKeyStatus.type === 'success' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                      <span>{masterKeyStatus.message}</span>
+                    </div>
+                  )}
+
+                  {/* Edit/Change Master Key Form */}
+                  {isEditingMasterKey && (
+                    <form onSubmit={handleUpdateMasterKey} className="space-y-2 pt-1 border-t border-slate-800 animate-in fade-in">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-300">
+                          {isEn ? "Set New Master Key (min 8 chars)" : "تعيين مفتاح طوارئ جديد (8 خانات على الأقل)"}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleGenerateRandomMasterKey}
+                          className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer font-semibold"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>{isEn ? "Generate Random Safe Key" : "توليد كود عشوائي قوي"}</span>
+                        </button>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newMasterKeyInput}
+                          onChange={(e) => setNewMasterKeyInput(e.target.value)}
+                          placeholder={isEn ? "Enter new secret key" : "أدخل مفتاح الطوارئ الجديد"}
+                          className="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
+                        />
+                        <button
+                          type="submit"
+                          className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold cursor-pointer"
+                        >
+                          {isEn ? "Save Master Key" : "حفظ المفتاح الجديد"}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
               </div>
             </div>
           )}

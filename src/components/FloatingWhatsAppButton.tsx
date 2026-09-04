@@ -102,10 +102,11 @@ export const FloatingWhatsAppButton: React.FC = () => {
           id="floating-whatsapp-btn"
           onClick={() => setIsOpenMenu(!isOpenMenu)}
           aria-label={isEn ? "WhatsApp Consultation" : "حجز واستشارة واتساب"}
-          className="relative w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white shadow-xl shadow-emerald-500/30 flex items-center justify-center transition-all transform hover:scale-105 cursor-pointer"
+          className="relative w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white shadow-xl shadow-emerald-500/50 ring-2 ring-white/70 flex items-center justify-center transition-all transform hover:scale-108 active:scale-95 cursor-pointer"
         >
-          {/* Pulse ring */}
-          <span className="absolute -inset-1 rounded-full bg-emerald-400/40 animate-ping pointer-events-none" />
+          {/* Glowing pulse rings */}
+          <span className="absolute -inset-1 rounded-full bg-emerald-400/40 blur-xs animate-pulse pointer-events-none" />
+          <span className="absolute -inset-2 rounded-full bg-emerald-500/30 animate-ping opacity-40 pointer-events-none [animation-duration:3s]" />
           
           {isOpenMenu ? (
             <X className="w-7 h-7 relative z-10" />
@@ -114,7 +115,7 @@ export const FloatingWhatsAppButton: React.FC = () => {
           )}
 
           {/* Active online dot */}
-          <span className="absolute top-1 end-1 w-3.5 h-3.5 rounded-full bg-white border-2 border-emerald-500 z-20 flex items-center justify-center">
+          <span className="absolute top-1 end-1 w-3.5 h-3.5 rounded-full bg-white border-2 border-emerald-500 z-20 flex items-center justify-center shadow-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
           </span>
         </button>

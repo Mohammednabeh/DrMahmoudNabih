@@ -1,20 +1,51 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useCMS } from '../context/CMSContext';
 import { Camera, Upload, CheckCircle2, AlertCircle, X, RefreshCw, Image as ImageIcon, Sparkles } from 'lucide-react';
 
 export const DoctorPhotoModal: React.FC = () => {
-  const { language, isPhotoModalOpen, setIsPhotoModalOpen, siteSettings, uploadDoctorPhoto, updateSiteSettings } = useCMS();
+  const { 
+    language, 
+    isPhotoModalOpen, 
+    setIsPhotoModalOpen, 
+    siteSettings, 
+    uploadDoctorPhoto, 
+    updateSiteSettings,
+    makeCurrentPhotoGlobalDefault 
+  } = useCMS();
   const isEn = language === 'en';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSettingDefault, setIsSettingDefault] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (!isPhotoModalOpen) return null;
-
   const currentPhoto = siteSettings.doctorPhotoUrl || '/dr-mahmoud.jpg';
+
+  // Automatically ensure the current photo is set as server default on modal open
+  useEffect(() => {
+    if (isPhotoModalOpen && currentPhoto.startsWith('data:image/')) {
+      makeCurrentPhotoGlobalDefault().catch(() => {});
+    }
+  }, [isPhotoModalOpen, currentPhoto]);
+
+  // Support clipboard paste (Ctrl+V) directly
+  useEffect(() => {
+    if (!isPhotoModalOpen) return;
+    const handlePaste = (e: ClipboardEvent) => {
+      if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+        const file = e.clipboardData.files[0];
+        if (file.type.startsWith('image/')) {
+          handleFile(file);
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [isPhotoModalOpen]);
+
+  if (!isPhotoModalOpen) return null;
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -30,16 +61,38 @@ export const DoctorPhotoModal: React.FC = () => {
       await uploadDoctorPhoto(file);
       setSuccessMessage(
         isEn 
-          ? 'Official photo successfully applied across the entire website without any AI alterations!' 
-          : 'تم تطبيق الصورة الأصلية الحقيقية بنجاح في كافة أقسام وصفحات الموقع دون أي تعديل بالذكاء الاصطناعي!'
+          ? 'Photo successfully loaded and saved as the permanent default photo of Dr. Mahmoud!' 
+          : 'تم تطبيق الصورة بنجاح وتثبيتها كصورة افتراضية رسمية لدكتور محمود في كامل الموقع!'
       );
       setTimeout(() => {
         setSuccessMessage(null);
-      }, 5000);
+      }, 6000);
     } catch (err: any) {
       setErrorMessage(err.message || (isEn ? 'Failed to process image' : 'تعذر معالجة الصورة'));
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleMakeGlobalDefault = async () => {
+    setIsSettingDefault(true);
+    setErrorMessage(null);
+    try {
+      const res = await makeCurrentPhotoGlobalDefault();
+      if (res.success) {
+        setSuccessMessage(
+          isEn 
+            ? 'Success! This photo is now locked as the permanent global default for all website visitors!' 
+            : 'تم بنجاح! تم اعتماد وتثبيت هذه الصورة كصورة افتراضية رسمية دائمة لدكتور محمود تظهر لجميع الزوار على كافة الأجهزة!'
+        );
+        setTimeout(() => setSuccessMessage(null), 6000);
+      } else {
+        setErrorMessage(res.message || (isEn ? 'Failed to lock default' : 'تعذر حفظ الصورة كافتراضية'));
+      }
+    } catch (e: any) {
+      setErrorMessage(e.message || (isEn ? 'An error occurred' : 'حدث خطأ'));
+    } finally {
+      setIsSettingDefault(false);
     }
   };
 
@@ -179,20 +232,36 @@ export const DoctorPhotoModal: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-2 pt-1">
+              <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2"
+                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>{isEn ? "Browse from Computer" : "تحديد ملف الصورة من الجهاز"}</span>
+                  <span>{isEn ? "Browse from Computer" : "تحديد ملف صورة من الجهاز"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="make-photo-global-default-btn"
+                  onClick={handleMakeGlobalDefault}
+                  disabled={isSettingDefault}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  title={isEn ? "Set as default for all visitors" : "تثبيت كصورة افتراضية لكافة الزوار"}
+                >
+                  {isSettingDefault ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
+                  <span>{isEn ? "Lock as Default for All" : "تثبيت كافتراضي دائم للموقع"}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleResetToDefault}
-                  className="px-3 py-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 text-xs font-medium transition-colors"
+                  className="px-3 py-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 text-xs font-medium transition-colors cursor-pointer"
                 >
                   {isEn ? "Reset Path" : "إعادة التعيين"}
                 </button>

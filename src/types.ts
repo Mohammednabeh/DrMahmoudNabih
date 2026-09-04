@@ -8,8 +8,7 @@ export type PageTab =
   | 'experience'
   | 'knowledge'
   | 'faq'
-  | 'contact'
-  | 'cms-guide';
+  | 'contact';
 
 export interface Category {
   id: string;

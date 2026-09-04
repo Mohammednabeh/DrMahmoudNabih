@@ -66,19 +66,6 @@ export const ContactView: React.FC = () => {
         {/* Contact Information & Center Details (Col 5) */}
         <div className="lg:col-span-5 space-y-6">
           
-          {/* Important Non-Commercial Notice Box */}
-          <div className="p-6 rounded-3xl bg-amber-50/70 border border-amber-200 text-amber-950 space-y-2 shadow-xs">
-            <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-amber-900">
-              <ShieldCheck className="w-4 h-4 text-amber-700" />
-              <span>{isEn ? 'Non-Commercial Portfolio Notice' : 'تنويه: موقع بورتفوليو مهني غير تجاري'}</span>
-            </div>
-            <p className="text-xs text-amber-900 leading-relaxed">
-              {isEn 
-                ? 'This website is a personal portfolio and educational resource, not an automated commercial booking platform. For appointments or cupping sessions at Al-Dawaa Cupping Center in Dammam, please contact the center directly via phone.' 
-                : 'هذا الموقع بورتفوليو مهني شخصي ومرجع تثقيفي غير مخصص للحجز التجاري الآلي. لتحديد المواعيد أو الاستفسار عن جلسات الحجامة في مجمع عيادات الدواء الأمثل بالدمام، يرجى الاتصال هاتفياً بالمركز.'}
-            </p>
-          </div>
-
           {/* WhatsApp Direct & Booking Card */}
           <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-emerald-50/50 border-2 border-emerald-500/30 shadow-xs space-y-4">
             <div className="flex items-center justify-between">

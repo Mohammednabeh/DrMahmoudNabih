@@ -12,13 +12,12 @@ import {
   PhoneCall, 
   Mail, 
   BookOpen, 
-  Building2,
-  Camera 
+  Building2 
 } from 'lucide-react';
 import { initialSkills } from '../data/initialData';
 
 export const AboutView: React.FC = () => {
-  const { language, setActiveTab, siteSettings, setIsPhotoModalOpen } = useCMS();
+  const { language, setActiveTab, siteSettings } = useCMS();
   const isEn = language === 'en';
 
   return (
@@ -63,18 +62,6 @@ export const AboutView: React.FC = () => {
                   {isEn ? 'Current Practice: Al-Dawaa Cupping Center, Dammam' : 'المقر الحالي: مجمع عيادات الدواء الأمثل للحجامة، الدمام'}
                 </div>
               </div>
-
-              {/* Quick Photo Upload Trigger */}
-              <button
-                type="button"
-                id="about-open-photo-modal-btn"
-                onClick={() => setIsPhotoModalOpen(true)}
-                title={isEn ? "Update / Replace with Authentic Photo" : "استبدال بالصورة الأصلية الحقيقية"}
-                className="absolute top-3 end-3 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700 hover:text-blue-600 backdrop-blur-md text-[11px] font-bold shadow-md border border-white/50 flex items-center gap-1.5 transition-all opacity-80 hover:opacity-100"
-              >
-                <Camera className="w-3.5 h-3.5 text-blue-600" />
-                <span>{isEn ? "Authentic Photo" : "الصورة الأصلية"}</span>
-              </button>
             </div>
           </div>
 

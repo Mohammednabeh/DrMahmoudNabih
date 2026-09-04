@@ -162,15 +162,15 @@ export const FAQView: React.FC = () => {
       <div className="p-6 rounded-3xl bg-white border border-slate-200 text-center space-y-3 shadow-xs">
         <p className="text-xs text-slate-600">
           {isEn 
-            ? 'Need to update or add questions in Framer CMS? Open the dashboard anytime.' 
-            : 'هل ترغب في تحديث أو إضافة أسئلة جديدة عبر لوحة Framer CMS؟ يمكنك فتح اللوحة بنقرة واحدة.'}
+            ? 'Need to update or add questions in the CMS? Open the dashboard anytime.' 
+            : 'هل ترغب في تحديث أو إضافة أسئلة جديدة عبر لوحة التحكم؟ يمكنك فتح اللوحة بنقرة واحدة.'}
         </p>
         <button
           onClick={() => setIsCMSStudioOpen(true)}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-700 shadow-xs cursor-pointer"
         >
           <Sliders className="w-3.5 h-3.5 text-blue-600" />
-          <span>{isEn ? 'Open FAQ in Framer CMS' : 'إدارة الأسئلة في Framer CMS'}</span>
+          <span>{isEn ? 'Manage FAQ' : 'إدارة الأسئلة'}</span>
         </button>
       </div>
 

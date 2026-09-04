@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCMS } from '../context/CMSContext';
 import { ArticleDetailView } from './ArticleDetailView';
+import { useKnowledgeCenterSEO } from '../hooks/useKnowledgeCenterSEO';
 import { 
   BookOpen, 
   Search, 
@@ -27,6 +28,9 @@ export const KnowledgeCenterView: React.FC = () => {
   
   const isEn = language === 'en';
   const ArrowIcon = isEn ? ArrowRight : ArrowLeft;
+
+  // Apply hub-level dynamic SEO when not viewing a single article
+  useKnowledgeCenterSEO(language, articles.length, !selectedArticleSlug);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -91,7 +95,7 @@ export const KnowledgeCenterView: React.FC = () => {
           id="knowledge-cms-manage-btn"
         >
           <Sliders className="w-3.5 h-3.5 text-blue-600" />
-          <span>{isEn ? 'Manage via Framer CMS' : 'إدارة المقالات عبر Framer CMS'}</span>
+          <span>{isEn ? 'Manage Articles' : 'إدارة المقالات'}</span>
         </button>
       </div>
 
@@ -194,10 +198,23 @@ export const KnowledgeCenterView: React.FC = () => {
                   setSelectedArticleSlug(article.slug);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="group p-6 rounded-3xl bg-white border border-slate-200 hover:border-blue-300 transition-all shadow-xs hover:shadow-md cursor-pointer flex flex-col justify-between"
+                className="group p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 hover:border-blue-300 transition-all shadow-xs hover:shadow-md cursor-pointer flex flex-col justify-between overflow-hidden"
                 id={`article-card-${article.slug}`}
               >
                 <div className="space-y-3.5">
+                  {/* Optional Featured Clinical Illustration Thumbnail */}
+                  {article.featuredImage && (
+                    <div className="w-full h-44 sm:h-48 rounded-2xl overflow-hidden bg-slate-100 relative">
+                      <img
+                        src={article.featuredImage}
+                        alt={isEn ? article.titleEn : article.titleAr}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  )}
+
                   {/* Category & Time */}
                   <div className="flex items-center justify-between gap-2">
                     <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">

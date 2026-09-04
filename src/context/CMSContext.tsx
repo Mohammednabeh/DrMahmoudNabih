@@ -57,11 +57,15 @@ interface CMSContextType {
   isAdminAuthenticated: boolean;
   isAdminAuthModalOpen: boolean;
   setIsAdminAuthModalOpen: (open: boolean) => void;
-  loginAdmin: (pin: string) => boolean;
+  loginAdmin: (pin: string) => { success: boolean; error?: string };
   logoutAdmin: () => void;
   changeAdminPin: (oldPin: string, newPin: string) => { success: boolean; error?: string };
+  masterRecoveryKey: string;
+  updateMasterRecoveryKey: (newKey: string) => void;
+  verifyMasterKeyAndResetPin: (masterKeyInput: string, newPin: string) => { success: boolean; error?: string };
   openCMSStudioSecurely: () => void;
   openPhotoModalSecurely: () => void;
+  makeCurrentPhotoGlobalDefault: () => Promise<{ success: boolean; message?: string }>;
 }
 
 const STORAGE_KEY_ARTICLES = 'dr_mahmoud_cms_articles_v2';
@@ -71,7 +75,9 @@ const STORAGE_KEY_SETTINGS = 'dr_mahmoud_cms_settings_v2';
 const STORAGE_KEY_LANG = 'dr_mahmoud_site_lang';
 const STORAGE_KEY_ADMIN_PIN = 'dr_mahmoud_admin_pin_v2';
 const STORAGE_KEY_ADMIN_SESSION = 'dr_mahmoud_admin_session_v2';
+const STORAGE_KEY_MASTER_KEY = 'dr_mahmoud_master_key_v2';
 const DEFAULT_ADMIN_PIN = '2026';
+const DEFAULT_MASTER_KEY = 'NABIH-8877-SECURE';
 
 const CMSContext = createContext<CMSContextType | undefined>(undefined);
 
@@ -85,8 +91,73 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  const [activeTab, setActiveTab] = useState<PageTab>('home');
-  const [selectedArticleSlug, setSelectedArticleSlug] = useState<string | null>(null);
+  const [activeTab, setActiveTabState] = useState<PageTab>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as PageTab;
+      if (tabParam && ['home', 'about', 'qualifications', 'licenses', 'experience', 'knowledge', 'faq', 'contact'].includes(tabParam)) {
+        return tabParam;
+      }
+      if (params.get('article') || window.location.hash.startsWith('#article-')) {
+        return 'knowledge';
+      }
+    }
+    return 'home';
+  });
+
+  const [selectedArticleSlug, setSelectedArticleSlugState] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const articleParam = params.get('article');
+      if (articleParam) return articleParam;
+      if (window.location.hash.startsWith('#article-')) {
+        return window.location.hash.replace('#article-', '');
+      }
+    }
+    return null;
+  });
+
+  const setSelectedArticleSlug = (slug: string | null) => {
+    setSelectedArticleSlugState(slug);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (slug) {
+        url.searchParams.set('tab', 'knowledge');
+        url.searchParams.set('article', slug);
+        window.history.replaceState({}, '', url.toString());
+      } else {
+        url.searchParams.delete('article');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  };
+
+  const setActiveTab = (tab: PageTab) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      if (tab !== 'knowledge') {
+        url.searchParams.delete('article');
+        setSelectedArticleSlugState(null);
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as PageTab;
+      const articleParam = params.get('article');
+      if (tabParam && ['home', 'about', 'qualifications', 'licenses', 'experience', 'knowledge', 'faq', 'contact'].includes(tabParam)) {
+        setActiveTabState(tabParam);
+      }
+      setSelectedArticleSlugState(articleParam || null);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [isCMSStudioOpenState, setIsCMSStudioOpenState] = useState<boolean>(false);
   const [isPhotoModalOpenState, setIsPhotoModalOpenState] = useState<boolean>(false);
 
@@ -111,6 +182,26 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  const [masterRecoveryKey, setMasterRecoveryKey] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_MASTER_KEY);
+      return saved || DEFAULT_MASTER_KEY;
+    } catch {
+      return DEFAULT_MASTER_KEY;
+    }
+  });
+
+  // Rate limiting states for protection against brute force
+  const [loginSecurity, setLoginSecurity] = useState<{
+    failedAttempts: number;
+    lockedUntil: number;
+  }>({ failedAttempts: 0, lockedUntil: 0 });
+
+  const [recoverySecurity, setRecoverySecurity] = useState<{
+    failedAttempts: number;
+    lockedUntil: number;
+  }>({ failedAttempts: 0, lockedUntil: 0 });
+
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
       const session = sessionStorage.getItem(STORAGE_KEY_ADMIN_SESSION);
@@ -123,8 +214,20 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState<boolean>(false);
   const [pendingAdminAction, setPendingAdminAction] = useState<'cms' | 'photo' | null>(null);
 
-  const loginAdmin = (pin: string): boolean => {
+  const loginAdmin = (pin: string): { success: boolean; error?: string } => {
+    const now = Date.now();
+    if (loginSecurity.lockedUntil > now) {
+      const remainingSec = Math.ceil((loginSecurity.lockedUntil - now) / 1000);
+      return {
+        success: false,
+        error: language === 'en'
+          ? `Too many failed attempts. Login locked for ${remainingSec}s.`
+          : `تم تجاوز الحد الأقصى للمحاولات الخاطئة. تسجيل الدخول مقفل أمنياً لمدة ${remainingSec} ثانية.`
+      };
+    }
+
     if (pin.trim() === adminPin.trim()) {
+      setLoginSecurity({ failedAttempts: 0, lockedUntil: 0 });
       setIsAdminAuthenticated(true);
       try {
         sessionStorage.setItem(STORAGE_KEY_ADMIN_SESSION, 'authenticated');
@@ -140,9 +243,22 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsCMSStudioOpenState(true);
       }
       setPendingAdminAction(null);
-      return true;
+      return { success: true };
     }
-    return false;
+
+    const failed = loginSecurity.failedAttempts + 1;
+    const willLock = failed >= 5;
+    setLoginSecurity({
+      failedAttempts: failed,
+      lockedUntil: willLock ? now + 3 * 60 * 1000 : 0
+    });
+
+    return {
+      success: false,
+      error: willLock
+        ? (language === 'en' ? 'Too many incorrect attempts! Portal locked for 3 minutes.' : 'تم إدخال رمز خاطئ 5 مرات! تم قفل النظام أمنياً لمدة 3 دقائق.')
+        : (language === 'en' ? `Incorrect PIN code. ${5 - failed} attempts remaining.` : `رمز المرور غير صحيح. متبقي لديك ${5 - failed} محاولات.`)
+    };
   };
 
   const logoutAdmin = () => {
@@ -176,6 +292,63 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       console.warn('Local storage write error:', e);
     }
+    return { success: true };
+  };
+
+  const updateMasterRecoveryKey = (newKey: string) => {
+    if (newKey.trim().length >= 8) {
+      setMasterRecoveryKey(newKey.trim());
+      try {
+        localStorage.setItem(STORAGE_KEY_MASTER_KEY, newKey.trim());
+      } catch (e) {
+        console.warn('Local storage write error:', e);
+      }
+    }
+  };
+
+  const verifyMasterKeyAndResetPin = (masterKeyInput: string, newPin: string): { success: boolean; error?: string } => {
+    const now = Date.now();
+    if (recoverySecurity.lockedUntil > now) {
+      const remainingSec = Math.ceil((recoverySecurity.lockedUntil - now) / 1000);
+      return {
+        success: false,
+        error: language === 'en'
+          ? `Recovery system locked. Try again in ${remainingSec}s.`
+          : `نظام الاسترجاع مقفل مؤقتاً لأسباب أمنية. يرجى الانتظار ${remainingSec} ثانية.`
+      };
+    }
+
+    const cleanKey = masterKeyInput.trim();
+    if (!cleanKey || cleanKey !== masterRecoveryKey) {
+      const failed = recoverySecurity.failedAttempts + 1;
+      const willLock = failed >= 5;
+      setRecoverySecurity({
+        failedAttempts: failed,
+        lockedUntil: willLock ? now + 5 * 60 * 1000 : 0
+      });
+
+      return {
+        success: false,
+        error: willLock
+          ? (language === 'en' ? 'Too many invalid attempts! System locked for 5 minutes.' : 'تم إدخال مفتاح خاطئ 5 مرات! تم قفل الاسترجاع أمنياً لمدة 5 دقائق.')
+          : (language === 'en' ? `Invalid Emergency Master Recovery Key. ${5 - failed} attempts remaining.` : `مفتاح الطوارئ السري غير صحيح. متبقي لديك ${5 - failed} محاولات.`)
+      };
+    }
+
+    if (newPin.trim().length < 4) {
+      return {
+        success: false,
+        error: language === 'en' ? 'New PIN must be at least 4 characters.' : 'يجب ألا يقل رمز المرور الجديد عن 4 خانات.'
+      };
+    }
+
+    setAdminPin(newPin.trim());
+    try {
+      localStorage.setItem(STORAGE_KEY_ADMIN_PIN, newPin.trim());
+    } catch (e) {
+      console.warn('Local storage write error:', e);
+    }
+    setRecoverySecurity({ failedAttempts: 0, lockedUntil: 0 });
     return { success: true };
   };
 
@@ -227,7 +400,25 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [articles, setArticles] = useState<Article[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_ARTICLES);
-      return saved ? JSON.parse(saved) : initialArticles;
+      if (!saved) return initialArticles;
+      const parsed: Article[] = JSON.parse(saved);
+      // Merge initialArticles so that images and updated clinical illustrations are preserved
+      const merged = initialArticles.map(initial => {
+        const found = parsed.find(p => p.id === initial.id);
+        if (found) {
+          return {
+            ...initial,
+            ...found,
+            featuredImage: initial.featuredImage || found.featuredImage,
+            contentAr: initial.featuredImage ? initial.contentAr : (found.contentAr || initial.contentAr),
+            contentEn: initial.featuredImage ? initial.contentEn : (found.contentEn || initial.contentEn),
+          };
+        }
+        return initial;
+      });
+      // Append any custom articles created by the user in the CMS
+      const customArticles = parsed.filter(p => !initialArticles.some(init => init.id === p.id));
+      return [...merged, ...customArticles];
     } catch {
       return initialArticles;
     }
@@ -236,7 +427,18 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [faqs, setFaqs] = useState<FAQItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_FAQS);
-      return saved ? JSON.parse(saved) : initialFAQ;
+      if (!saved) return initialFAQ;
+      const parsed: FAQItem[] = JSON.parse(saved);
+      const merged = initialFAQ.map(init => {
+        const found = parsed.find(p => p.id === init.id);
+        if (!found) return init;
+        if (init.id === 'faq-9') {
+          return { ...found, questionAr: init.questionAr, questionEn: init.questionEn, answerAr: init.answerAr, answerEn: init.answerEn };
+        }
+        return { ...init, ...found };
+      });
+      const customFaqs = parsed.filter(p => !initialFAQ.some(init => init.id === p.id));
+      return [...merged, ...customFaqs];
     } catch {
       return initialFAQ;
     }
@@ -388,6 +590,48 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  // Automatically ensure client's custom photo is persisted as the server's default photo
+  useEffect(() => {
+    if (siteSettings.doctorPhotoUrl && siteSettings.doctorPhotoUrl.startsWith('data:image/')) {
+      fetch('/api/upload-doctor-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64: siteSettings.doctorPhotoUrl })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success) {
+          console.log('Successfully synchronized client custom doctor photo to server disk default');
+        }
+      })
+      .catch(err => {
+        console.warn('Auto-sync doctor photo error:', err);
+      });
+    }
+  }, [siteSettings.doctorPhotoUrl]);
+
+  const makeCurrentPhotoGlobalDefault = async (): Promise<{ success: boolean; message?: string }> => {
+    const photoToSave = siteSettings.doctorPhotoUrl || '/dr-mahmoud.jpg';
+    if (photoToSave.startsWith('data:image/')) {
+      try {
+        const res = await fetch('/api/upload-doctor-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64: photoToSave })
+        });
+        const data = await res.json();
+        if (data.success) {
+          return { success: true };
+        }
+        return { success: false, message: data.error };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    } else {
+      return { success: true };
+    }
+  };
+
   return (
     <CMSContext.Provider
       value={{
@@ -416,6 +660,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isPhotoModalOpen: isPhotoModalOpenState,
         setIsPhotoModalOpen,
         uploadDoctorPhoto,
+        makeCurrentPhotoGlobalDefault,
         isBookingModalOpen,
         setIsBookingModalOpen,
         bookingServiceType,
@@ -426,6 +671,9 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loginAdmin,
         logoutAdmin,
         changeAdminPin,
+        masterRecoveryKey,
+        updateMasterRecoveryKey,
+        verifyMasterKeyAndResetPin,
         openCMSStudioSecurely,
         openPhotoModalSecurely
       }}

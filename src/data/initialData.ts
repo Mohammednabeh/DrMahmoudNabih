@@ -1,4 +1,5 @@
 import { Category, Article, FAQItem, SiteSettings, ExperienceItem, QualificationItem, LicenseItem, SkillItem } from '../types';
+import { articleImages } from './articleImages';
 
 export const initialCategories: Category[] = [
   {
@@ -55,6 +56,7 @@ export const initialArticles: Article[] = [
     titleAr: 'ما هي الحجامة الطبية؟ المفاهيم الأساسية والتقييم السريري',
     titleEn: 'What is Medical Cupping Therapy? Core Principles & Clinical Evaluation',
     categoryId: 'cat-understanding',
+    featuredImage: articleImages.dryCupping,
     shortAnswerAr: 'الحجامة ممارسة علاجية تكميلية تقليدية تُستخدم فيها كؤوس مصممة خصيصاً لخلق شفط محكم على مناطق مختارة من الجلد، وتُحدد تقنيتها وفقاً لتقييم مهني فردي لكل حالة.',
     shortAnswerEn: 'Cupping therapy is a traditional complementary modality using specialized cups to create controlled suction on targeted skin areas, tailored strictly according to individualized clinical assessment.',
     contentAr: `### ما هي الحجامة؟
@@ -106,6 +108,7 @@ Suitability depends strictly on individual circumstances and licensed profession
     titleAr: 'أنواع الحجامة: الجافة، الرطبة، والمساجية والفروقات السريرية',
     titleEn: 'Types of Cupping: Dry, Wet, and Moving Cupping Compared',
     categoryId: 'cat-understanding',
+    featuredImage: articleImages.wetCupping,
     shortAnswerAr: 'تتنوع أساليب الحجامة بين الجافة (بدون شقوق)، والرطبة (تتطلب شروط تعقيم طبية دقيقة وإجراءات احترازية للنزيف)، والمساجية (باستخدام زيوت طبية لتحريك الكأس على العضلات).',
     shortAnswerEn: 'Cupping modalities primarily encompass Dry Cupping (intact skin vacuum), Wet Cupping (micro-incisions requiring medical asepsis), and Moving/Massage Cupping (gliding cups along fascial lines).',
     contentAr: `### تنوع أساليب الحجامة
@@ -113,12 +116,18 @@ Suitability depends strictly on individual circumstances and licensed profession
 
 ### الحجامة الجافة (Dry Cupping)
 تعتمد الحجامة الجافة بشكل أساسي على خلق الشفط على الجلد دون إحداث أي شقوق أو جروح. تُعد الأكثر شيوعاً والأقل تعقيداً من حيث الإجراءات الوقائية.
+
+![الحجامة الجافة: كوب حجامة يشفط الجلد السليم بدون دم، موضحاً تشكل قبة الشفط الفراغي لتنشيط التروية الدموية وإرخاء العضلات](${articleImages.dryCupping})
+
 * **آلية العمل:** يتم سحب الجلد والأنسجة الرخوة السطحية داخل الكأس باستخدام مضخات ميكانيكية محكمة.
 * **الآثار الجلدية المؤقتة:** قد تظهر علامات دائرية على الجلد نتيجة لزيادة تدفق الدم الموضعي، وتتلاشى تدريجياً خلال أيام.
 * **التفاوت الفردي:** يختلف رد الفعل ومدى الارتياح العضلي من شخص إلى آخر.
 
 ### الحجامة الرطبة (Wet Cupping)
 تتضمن الحجامة الرطبة خطوات إجرائية إضافية بعد مرحلة الشفط الأولي، حيث يتم إحداث خدوش سطحية دقيقة جداً ومحسوبة بالجلد لسحب كميات محدودة من الدم الموضعي المحتقن.
+
+![الحجامة الرطبة: كوب حجامة يشفط الدم الموضعي مع قطعة قطن معقمة ومسحات مطهرة على صينية طبية معقمة](${articleImages.wetCupping})
+
 * **مؤهلات الممارس:** يجب أن تُجرى حصراً بواسطة ممارس صحي مرخص ومؤهل.
 * **البيئة المعقمة ومكافحة العدوى:** تستلزم أدوات معقمة ذات استخدام واحد لكل مريض والتخلص منها وفق بروتوكولات النفايات الطبية.
 * **تقييم مخاطر النزيف:** الفحص المسبق لأي تاريخ مرضي لاضطرابات التخثر أو أدوية السيولة.
@@ -132,12 +141,18 @@ Cupping modalities diverge significantly in technique, physiological intent, and
 
 ### Dry Cupping
 Dry cupping relies on static negative pressure created over intact skin without any incisions.
+
+![Dry Cupping: Medical suction cup pulling intact dermal tissue without incisions to promote localized hyperemic perfusion](${articleImages.dryCupping})
+
 * **Mechanism:** Soft tissues and superficial fascia are pulled into the cup using a mechanical hand pump.
 * **Transient Discoloration:** Circular ecchymotic rings often appear secondary to extravasation, typically clearing within days.
 * **Clinical Utility:** Common for musculoskeletal stiffness and trigger-point modulation.
 
 ### Wet Cupping (Hijama)
 Wet cupping introduces an additional procedural phase: superficial microscopic scarifications on the skin surface following initial vacuum, facilitating targeted local blood draw.
+
+![Wet Cupping: Controlled negative suction drawing capillary blood with sterile cotton pad on surgical tray](${articleImages.wetCupping})
+
 * **Strict Licensure:** Must only be administered by certified, licensed healthcare practitioners.
 * **Infection Control:** Absolute requirement for single-use, pre-sterilized consumables and medical sharps disposal.
 * **Hemostasis Screening:** Strict pre-screening for coagulopathies and antiplatelet/anticoagulant regimens.
@@ -156,10 +171,13 @@ Cups are systematically glided over muscular planes lubricated with dermatologic
     titleAr: 'الحجامة والنشاط البدني والرياضيين: ما بين الآمال والحقائق',
     titleEn: 'Cupping Therapy for Athletes: Athletic Recovery Realities',
     categoryId: 'cat-understanding',
+    featuredImage: articleImages.sportsCupping,
     shortAnswerAr: 'يلجأ بعض الرياضيين للحجامة كعنصر تكميلي ضمن روتين الاستشفاء العضلي إلى جانب العلاج الطبيعي والتغذية والراحة، ولا تعتبر بديلاً عن التأهيل الرياضي المتخصص.',
     shortAnswerEn: 'Athletes frequently incorporate cupping into broader recovery regimens alongside physical therapy, adequate sleep, and nutrition; it is an adjunct, not a replacement for active athletic rehab.',
     contentAr: `### لماذا يلجأ الرياضيون للحجامة؟
 شهدت السنوات الأخيرة إقبالاً ملحوظاً من الرياضيين المحترفين والهواة على الحجامة الطبية كجزء من برامج الاستشفاء الرياضي (Athletic Recovery) وإدارة الإجهاد العضلي بعد التدريبات المكثفة.
+
+![أدوات الاستشفاء الرياضي والتأهيل الحركي وكؤوس تحرير اللفافة العضلية المعتمدة للرياضيين](${articleImages.sportsCupping})
 
 ### الحجامة ضمن منظومة الاستشفاء المتكاملة
 لا تعمل الحجامة بمعزل عن الركائز الأساسية للتعافي الرياضي. يستفيد الرياضيون منها عند دمجها بعناية مع:
@@ -174,6 +192,8 @@ Cups are systematically glided over muscular planes lubricated with dermatologic
 * **واقعية التوقعات:** الحجامة ليست أداة سحرية تضمن تحسين الأرقام القياسية أو تسريع الشفاء من التمزقات الحادة للأربطة دون تدخل طبي.`,
     contentEn: `### Athletes and Cupping
 High-performance athletes widely adopt cupping as an adjunct in recovery protocols to alleviate post-exertional muscular soreness and tissue tension.
+
+![Athletic recovery tools, myofascial release cups, and physiotherapy equipment for active athletes](${articleImages.sportsCupping})
 
 ### An Integrated Recovery Ecosystem
 Cupping yields optimal outcomes when situated within an evidence-based athletic recovery regimen:
@@ -268,10 +288,13 @@ Tradition provides spiritual and historical resonance, but clinical application 
     titleAr: 'مبادئ السلامة والتعقيم ومكافحة العدوى في الممارسة المهنية للحجامة',
     titleEn: 'Clinical Safety, Sterilization, and Infection Control in Cupping',
     categoryId: 'cat-safety',
+    featuredImage: articleImages.cuppingTools,
     shortAnswerAr: 'السلامة هي الأولوية المطلقة: تشمل استخدام أدوات معقمة ذات استخدام وحيد، تطهير الجلد، الفحص المسبق لأدوية السيولة، والالتزام بمعايير مكافحة العدوى الرسمية.',
     shortAnswerEn: 'Patient safety is paramount: requiring 100% single-use sterile disposables, antiseptic skin preparation, pre-screening for anticoagulants, and strict adherence to official healthcare infection control.',
     contentAr: `### الأولوية القصوى: سلامة المراجع
 تعتمد الممارسة المهنية الآمنة للحجامة على أسس علمية ووقائية صارمة تمنع حدوث أي مضاعفات وتضمن تجربة علاجية مريحة ومطابقة للمعايير الصحية المعتمدة.
+
+![مستلزمات وأدوات الحجامة الطبية المعقمة ذات الاستخدام الواحد ومطهرات التعقيم والصينية الجراحية](${articleImages.cuppingTools})
 
 ### ركائز الأمان السريري:
 * **الكفاءة والترخيص المهني:** ممارسة الإجراء حصراً من قِبل ممارسين مصنفين ومرخصين من الهيئات الصحية (مثل SCFHS في السعودية).
@@ -281,6 +304,8 @@ Tradition provides spiritual and historical resonance, but clinical application 
 * **تطهير الجلد السليم:** استخدام المحاليل المطهرة الطبية المعتمدة قبل الإجراء وبعده، ووضع ضمادات معقمة لحماية مواضع الشفط.`,
     contentEn: `### Clinical Imperative
 Medical cupping demands strict adherence to institutional infection control to eliminate any potential cross-contamination or adverse incidents.
+
+![Sterile single-use disposable cupping tools, packaged lancets, and antiseptic preparation tray](${articleImages.cuppingTools})
 
 ### Foundational Pillars of Clinical Safety
 * **Credentialed Licensure:** Administered exclusively by healthcare specialists certified by official regulatory bodies (such as the SCFHS in Saudi Arabia).
@@ -299,6 +324,7 @@ Medical cupping demands strict adherence to institutional infection control to e
     titleAr: 'موانع الحجامة والحالات التي تتطلب تقييماً طبياً خاصاً قبل الجلسة',
     titleEn: 'Contraindications and Pre-Procedure Medical Screening in Cupping',
     categoryId: 'cat-safety',
+    featuredImage: articleImages.cuppingTools,
     shortAnswerAr: 'تُمنع الحجامة الرطبة في حالات اضطرابات النزيف الشديدة، تناول مميعات الدم دون موافقة الطبيب، العدوى الجلدية النشطة، والحمى الحادة، وتتطلب تقييماً خاصاً للحوامل ومرضى السكري.',
     shortAnswerEn: 'Cupping is contraindicated in severe bleeding disorders, unmonitored anticoagulant therapy, active skin infections, and acute fevers, requiring specialized caution in pregnancy and diabetes.',
     contentAr: `### مبدأ التقييم الفردي
@@ -336,6 +362,7 @@ Prioritizing patient wellbeing requires vigilant exclusion of contraindications 
     titleAr: 'كيف تستعد لجلسة الحجامة الطبية؟ إرشادات ما قبل الإجراء',
     titleEn: 'How to Prepare for a Medical Cupping Session: Pre-Visit Guidelines',
     categoryId: 'cat-safety',
+    featuredImage: articleImages.cuppingTools,
     shortAnswerAr: 'التحضير السليم يشمل الإفصاح عن كافة الأدوية والحالات الصحية، تناول وجبة خفيفة قبل الجلسة بساعتين إلى 3 ساعات، شرب كمية كافية من الماء، وارتداء ملابس فضفاضة ومريحة.',
     shortAnswerEn: 'Proper preparation entails full disclosure of medications, having a light meal 2–3 hours beforehand, maintaining adequate hydration, and wearing comfortable, loose-fitting clothing.',
     contentAr: `### خطوات الاستعداد للجلسة
@@ -383,6 +410,7 @@ Inform the specialist regarding:
     titleAr: 'العناية بعد الحجامة: نصائح التعافي والملاحظة السريرية',
     titleEn: 'Post-Cupping Care and Recovery Guidelines',
     categoryId: 'cat-safety',
+    featuredImage: articleImages.dryCupping,
     shortAnswerAr: 'بعد الجلسة: خذ قسطاً من الراحة، حافظ على نظافة وجفاف مواضع الكؤوس، اشرب سوائل دافئة، تجنب الاستحمام بالماء الساخن أو التمرين الشديد لمدة 24 ساعة.',
     shortAnswerEn: 'Post-procedure care: Rest briefly, keep cupping sites clean and dry, stay hydrated with warm fluids, and avoid vigorous workouts or hot showers for 24 hours.',
     contentAr: `### مرحلة ما بعد الجلسة
@@ -484,10 +512,13 @@ Women can safely benefit from cupping for stress reduction, tension headaches, a
     titleAr: 'الحجامة وآلام الظهر: المسببات الميكانيكية ودور الرعاية التكميلية',
     titleEn: 'Cupping Therapy and Back Pain: Mechanical Factors & Adjunctive Care',
     categoryId: 'cat-health',
+    featuredImage: articleImages.backTherapy,
     shortAnswerAr: 'قد تساهم الحجامة في تخفيف التشنج العضلي وتحسين تدفق الدم في عضلات الظهر، لكنها لا تُغني عن الفحص الطبي واستبعاد الانزلاق الغضروفي أو الضغط العصبي.',
     shortAnswerEn: 'Cupping can support relief of paraspinal muscle spasms and enhance local perfusion, but must be paired with clinical assessment to rule out disc herniation or neurological impingement.',
     contentAr: `### شيوع آلام الظهر
 تُعد آلام أسفل الظهر من أكثر الشكاوى الحركية انتشاراً، وتتراوح أسبابها بين الإجهاد العضلي الوضعي، وضعف عضلات الجذع، والانزلاقات الغضروفية.
+
+![نموذج تشريحي للعمود الفقري والفقرات القطنية مع أدوات العلاج الطبيعي والتأهيل الحركي التكميلي لآلام الظهر](${articleImages.backTherapy})
 
 ### كيف تساعد الحجامة التكميلية؟
 * تسهم قوى الشفط في زيادة التروية الدموية الدقيقة للعضلات المحيطة بالعمود الفقري.
@@ -498,6 +529,8 @@ Women can safely benefit from cupping for stress reduction, tension headaches, a
 إذا كان ألم الظهر مصحوباً بأعراض عصبية كالتنميل أو الخدر في الساقين، أو ضعف في قوة القدم، أو اضطراب في التحكم بالمثانة، فإن الحالة تتطلب فحصاً عصبياً وإشعاعياً عاجلاً ولا تكفي الحجامة وحدها.`,
     contentEn: `### Overview
 Lower back pain stems from diverse etiologies: postural mechanical overload, core muscular imbalances, and structural disc pathology.
+
+![Anatomical spine and lumbar vertebrae model with physical therapy rehabilitation equipment](${articleImages.backTherapy})
 
 ### Adjunctive Benefits of Cupping:
 * Decompresses paraspinal myofascial layers and increases microcirculatory perfusion.
@@ -517,6 +550,7 @@ Presence of progressive radicular numbness, lower extremity motor deficit (foot 
     titleAr: 'الحجامة وآلام الكتف ولوح الكتف: التقييم العضلي والمفصلي',
     titleEn: 'Cupping for Shoulder & Scapular Pain: Musculoskeletal Perspectives',
     categoryId: 'cat-health',
+    featuredImage: articleImages.backTherapy,
     shortAnswerAr: 'تفيد الحجامة في تهدئة التوتر العضلي في منطقة أعلى الظهر وحول لوح الكتف الناتج عن الجلوس المكتبي، مع ضرورة تقييم أوتار الكفة المدورة بدقة.',
     shortAnswerEn: 'Cupping is beneficial in relieving periscapular and trapezius stiffness associated with desk work, alongside thorough assessment of rotator cuff integrity.',
     contentAr: `### آلام الكتف ولوح الكتف
@@ -874,10 +908,10 @@ export const initialFAQ: FAQItem[] = [
   },
   {
     id: 'faq-9',
-    questionAr: 'هل هذا الموقع مخصص للأغراض التجارية أو حجز العيادات؟',
-    questionEn: 'Is this website intended for commercial booking or clinic sales?',
-    answerAr: 'لا، هذا الموقع هو بورتفوليو مهني شخصي ومركز معرفي تثقيفي غير تجاري، خُصص لتوثيق المؤهلات المعتمدة والخبرات السريرية للدكتور محمود، ولتقديم مقالات تثقيفية قائمة على المبادئ الصحية الموثوقة للتوعية العامة.',
-    answerEn: 'No. This website is strictly a professional personal portfolio and educational knowledge center. It is not for commercial sales or general clinic advertising, but rather to document verified credentials, clinical history, and factual health education.',
+    questionAr: 'ما هو الهدف من هذا الموقع والمركز المعرفي؟',
+    questionEn: 'What is the purpose of this website and knowledge center?',
+    answerAr: 'يهدف الموقع لتوثيق المؤهلات المعتمدة والخبرات السريرية للدكتور محمود علي نبيه في العلاج الطبيعي والحجامة الطبية، وتقديم مقالات تثقيفية موثوقة لرفع الوعي الصحي، وتسهيل التواصل المباشر وحجز الاستشارات السريرية.',
+    answerEn: 'The platform aims to document the certified credentials and clinical experience of Dr. Mahmoud Ali Nabih in physiotherapy and medical cupping, offer reliable educational articles, and facilitate direct professional inquiries and consultations.',
     category: 'Contact',
     order: 9,
     published: true
