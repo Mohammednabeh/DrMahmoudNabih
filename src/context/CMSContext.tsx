@@ -11,7 +11,8 @@ import {
   initialCategories, 
   initialArticles, 
   initialFAQ, 
-  initialSiteSettings 
+  initialSiteSettings,
+  drMahmoudDefaultPhoto 
 } from '../data/initialData';
 import { 
   optimizePhoto, 
@@ -455,7 +456,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (!parsed.doctorPhotoUrl || parsed.doctorPhotoUrl === '/dr-mahmoud.jpg' || parsed.doctorPhotoUrl.includes('unsplash.com')) {
+        if (parsed.doctorPhotoUrl && parsed.doctorPhotoUrl.includes('unsplash.com')) {
           parsed.doctorPhotoUrl = initialSiteSettings.doctorPhotoUrl;
         }
         return { ...initialSiteSettings, ...parsed };
@@ -466,20 +467,47 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // Check and restore doctor photo from IndexedDB on initial load
+  // Query server for persisted settings & uploaded photo on mount (survives cookie clearing!)
   useEffect(() => {
+    // 1. Fetch server settings first - directly from server disk
+    fetch('/api/site-settings', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && data.settings) {
+          const s = data.settings;
+          const photo = s.doctorPhotoBase64 || s.doctorPhotoUrl;
+          if (photo) {
+            setSiteSettings(prev => ({
+              ...prev,
+              doctorPhotoUrl: photo,
+              ...(s.clinicName ? { clinicName: s.clinicName } : {})
+            }));
+            try {
+              localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({
+                ...initialSiteSettings,
+                ...s,
+                doctorPhotoUrl: photo
+              }));
+            } catch (e) {}
+            savePhotoToIndexedDB(photo).catch(() => {});
+          }
+        }
+      })
+      .catch(err => {
+        console.warn('Server settings fetch notice:', err);
+      });
+
+    // 2. Also check IndexedDB if client state was empty
     getPhotoFromIndexedDB().then((idbPhoto) => {
       if (idbPhoto && idbPhoto.startsWith('data:image/')) {
         setSiteSettings(prev => {
-          if (prev.doctorPhotoUrl !== idbPhoto) {
+          if (!prev.doctorPhotoUrl || prev.doctorPhotoUrl === drMahmoudDefaultPhoto) {
             return { ...prev, doctorPhotoUrl: idbPhoto };
           }
           return prev;
         });
       }
-    }).catch((err) => {
-      console.warn('IndexedDB photo restore check notice:', err);
-    });
+    }).catch(() => {});
   }, []);
 
   // Sync document lang and dir attribute
@@ -603,13 +631,17 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // 3. Update client state & localStorage
       updateSiteSettings({ doctorPhotoUrl: optimizedDataUrl });
 
-      // 4. Persist to server disk in public/dr-mahmoud.jpg & dist/dr-mahmoud.jpg
+      // 4. Persist to server disk in public/dr-mahmoud.jpg, dist/dr-mahmoud.jpg, and server settings
       try {
-        await fetch('/api/upload-doctor-photo', {
+        const res = await fetch('/api/upload-doctor-photo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ base64: optimizedDataUrl })
         });
+        const serverData = await res.json();
+        if (serverData && serverData.success) {
+          console.log('Doctor photo successfully persisted to server disk:', serverData.doctorPhotoUrl);
+        }
       } catch (err) {
         console.warn('Server disk write attempt notice (persisted in IndexedDB & local state):', err);
       }

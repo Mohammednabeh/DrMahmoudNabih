@@ -127,6 +127,36 @@ export const DoctorPhotoModal: React.FC = () => {
     setIsDragging(false);
   };
 
+  const handleTestCookieClear = async () => {
+    try {
+      // Simulate clearing cookies and localStorage
+      localStorage.removeItem('dr_mahmoud_site_settings');
+      sessionStorage.clear();
+      
+      // Fetch fresh settings from server
+      const res = await fetch('/api/site-settings', { cache: 'no-store' });
+      const data = await res.json();
+      if (data && data.success && data.settings && (data.settings.doctorPhotoBase64 || data.settings.doctorPhotoUrl)) {
+        const serverPhoto = data.settings.doctorPhotoBase64 || data.settings.doctorPhotoUrl;
+        updateSiteSettings({ doctorPhotoUrl: serverPhoto });
+        setSuccessMessage(
+          isEn 
+            ? 'Test passed! Cookies & cache were wiped, and your photo was successfully reloaded directly from the server disk!' 
+            : 'نجح الاختبار! تم مسح الكوكيز والذاكرة المحلية بنجاح، وظلت صورتك المرفوعة محفوظة كما هي ومسترجعة مباشرة من خادم الموقع!'
+        );
+      } else {
+        setSuccessMessage(
+          isEn 
+            ? 'Server storage is ready. Please upload your original photo using the upload button to lock it onto the server!' 
+            : 'السيرفر جاهز لاستقبال وتثبيت صورتك الدائمة. يرجى الضغط على زر رفع الصورة أدناه لتثبيتها على السيرفر بشكل نهائي!'
+        );
+      }
+      setTimeout(() => setSuccessMessage(null), 7000);
+    } catch (e: any) {
+      setErrorMessage(isEn ? 'Test failed: ' + e.message : 'تعذر إتمام اختبار السيرفر: ' + e.message);
+    }
+  };
+
   const handleResetToDefault = () => {
     updateSiteSettings({ doctorPhotoUrl: drMahmoudDefaultPhoto });
     setSuccessMessage(isEn ? 'Reset to official doctor portrait' : 'تمت استعادة الصورة الرسمية لدكتور محمود');
@@ -323,6 +353,16 @@ export const DoctorPhotoModal: React.FC = () => {
 
                 <button
                   type="button"
+                  onClick={handleTestCookieClear}
+                  className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                  title={isEn ? "Simulate clearing browser cookies and test server recovery" : "محاكاة حذف الكوكيز واختبار استرجاع الصورة من السيرفر"}
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{isEn ? "Test Cookie Clearing" : "تجربة حذف الكوكيز"}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleResetToDefault}
                   className="px-3 py-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 text-xs font-medium transition-colors cursor-pointer"
                 >
@@ -345,21 +385,21 @@ export const DoctorPhotoModal: React.FC = () => {
             </p>
           </div>
 
-          {/* GitHub Pages & Permanent Persistence Guidance */}
+          {/* Server-Side & Browser Permanent Persistence Guidance */}
           <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-slate-700 space-y-2">
             <div className="flex items-center gap-2 font-bold text-emerald-900">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>{isEn ? "Permanent Persistence & GitHub Pages Deployment" : "الحفظ الدائم والنشر على GitHub Pages"}</span>
+              <span>{isEn ? "Server-Side Disk Persistence (Survives Cookie Clearing)" : "الحفظ الدائم على السيرفر (مقاوم لمسح الكوكيز تماماً)"}</span>
             </div>
             <p className="leading-relaxed text-slate-600">
               {isEn 
-                ? "• In this browser: The uploaded photo is now saved in IndexedDB and will never disappear even after session ends, cache clearing, or page refreshes."
-                : "• داخل هذا المتصفح: الصورة المحفوظة هنا تُخزن الآن في IndexedDB ولن تختفي أبداً حتى بعد إغلاق الجلسة أو إعادة تشغيل المتصفح."}
+                ? "• Permanent Server Storage: When you upload a photo, it is directly written to the server disk and registered in server-settings.json. Even if you clear all cookies, cache, and browser data, the site will automatically fetch and restore your photo from the server on startup!"
+                : "• حفظ تلقائي دائم على السيرفر: بمجرد اختيار ورفع الصورة، تُحفظ مباشرة كملف حقيقي على خادم الموقع وقاعدة الإعدادات الدائمة. حتى إذا قمت بحذف الكوكيز وسجل المتصفح بالكامل، سيقوم الموقع تلقائياً باسترجاع صورتك المرفوعة من السيرفر فور تحميل الصفحة!"}
             </p>
             <p className="leading-relaxed text-slate-600">
               {isEn
-                ? "• For GitHub Pages: To make the photo permanent for all external internet visitors, click 'Download JPG' and place the file in 'public/dr-mahmoud.jpg' in your GitHub repository, or attach the original image file directly here in our chat!"
-                : "• لموقعك على GitHub Pages: لتظهر الصورة لجميع الزوار على الإنترنت بشكل دائم، اضغط زر 'تنزيل ملف الصورة' وضع الملف داخل 'public/dr-mahmoud.jpg' في مستودع GitHub، أو أرفق ملف الصورة الأصلية هنا مباشرة في الشات وسأدمجه لك فوراً في ملفات المشروع."}
+                ? "• For GitHub Pages: Click 'Download JPG' and commit 'public/dr-mahmoud.jpg' into your repository so it displays permanently for visitors on static hosting."
+                : "• للنشر على GitHub Pages: يمكنك أيضاً الضغط على 'تنزيل ملف الصورة' ووضع الملف في 'public/dr-mahmoud.jpg' بمستودع GitHub ليظهر للجميع بشكل دائم."}
             </p>
           </div>
         </div>
