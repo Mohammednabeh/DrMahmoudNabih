@@ -14,7 +14,7 @@ import {
   BookOpen, 
   Building2 
 } from 'lucide-react';
-import { initialSkills } from '../data/initialData';
+import { initialSkills, drMahmoudDefaultPhoto } from '../data/initialData';
 
 export const AboutView: React.FC = () => {
   const { language, setActiveTab, siteSettings } = useCMS();
@@ -47,11 +47,14 @@ export const AboutView: React.FC = () => {
           <div className="rounded-3xl overflow-hidden bg-white p-2.5 border border-slate-200 shadow-xl relative">
             <div className="aspect-3/4 rounded-2xl overflow-hidden relative group">
               <img
-                src={siteSettings.doctorPhotoUrl || '/dr-mahmoud.jpg'}
+                src={siteSettings.doctorPhotoUrl || drMahmoudDefaultPhoto}
                 alt={isEn ? "Dr. Mahmoud Ali Nabih" : "د. محمود علي نبيه"}
                 className="w-full h-full object-cover object-top"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80';
+                  const img = e.target as HTMLImageElement;
+                  if (img.src !== drMahmoudDefaultPhoto) {
+                    img.src = drMahmoudDefaultPhoto;
+                  }
                 }}
               />
               <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-slate-950/90 via-slate-950/40 to-transparent p-5 text-white">

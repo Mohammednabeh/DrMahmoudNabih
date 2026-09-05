@@ -20,7 +20,7 @@ import {
   MessageCircle,
   Calendar
 } from 'lucide-react';
-import { initialExperiences } from '../data/initialData';
+import { initialExperiences, drMahmoudDefaultPhoto } from '../data/initialData';
 
 export const HomeView: React.FC = () => {
   const { 
@@ -84,11 +84,14 @@ export const HomeView: React.FC = () => {
             <div className="bg-white p-2 sm:p-2.5 rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative group">
               <div className="aspect-4/5 bg-slate-200 rounded-2xl flex items-end justify-center overflow-hidden relative">
                 <img
-                  src={siteSettings.doctorPhotoUrl || '/dr-mahmoud.jpg'}
+                  src={siteSettings.doctorPhotoUrl || drMahmoudDefaultPhoto}
                   alt={isEn ? "Dr. Mahmoud Ali Nabih" : "د. محمود علي نبيه"}
                   className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-103"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80';
+                    const img = e.target as HTMLImageElement;
+                    if (img.src !== drMahmoudDefaultPhoto) {
+                      img.src = drMahmoudDefaultPhoto;
+                    }
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />

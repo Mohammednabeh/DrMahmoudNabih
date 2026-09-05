@@ -1,6 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCMS } from '../context/CMSContext';
-import { Camera, Upload, CheckCircle2, AlertCircle, X, RefreshCw, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { 
+  Camera, 
+  Upload, 
+  CheckCircle2, 
+  AlertCircle, 
+  X, 
+  RefreshCw, 
+  Image as ImageIcon, 
+  Sparkles,
+  Download,
+  Copy,
+  ShieldCheck,
+  Globe
+} from 'lucide-react';
+import { drMahmoudDefaultPhoto } from '../data/initialData';
 
 export const DoctorPhotoModal: React.FC = () => {
   const { 
@@ -21,7 +35,7 @@ export const DoctorPhotoModal: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const currentPhoto = siteSettings.doctorPhotoUrl || '/dr-mahmoud.jpg';
+  const currentPhoto = siteSettings.doctorPhotoUrl || drMahmoudDefaultPhoto;
 
   // Automatically ensure the current photo is set as server default on modal open
   useEffect(() => {
@@ -114,8 +128,35 @@ export const DoctorPhotoModal: React.FC = () => {
   };
 
   const handleResetToDefault = () => {
-    updateSiteSettings({ doctorPhotoUrl: '/dr-mahmoud.jpg' });
-    setSuccessMessage(isEn ? 'Reset to default path (/dr-mahmoud.jpg)' : 'تمت استعادة المسار الافتراضي (/dr-mahmoud.jpg)');
+    updateSiteSettings({ doctorPhotoUrl: drMahmoudDefaultPhoto });
+    setSuccessMessage(isEn ? 'Reset to official doctor portrait' : 'تمت استعادة الصورة الرسمية لدكتور محمود');
+  };
+
+  const handleDownloadPhoto = () => {
+    if (!currentPhoto) return;
+    const a = document.createElement('a');
+    a.href = currentPhoto;
+    a.download = 'dr-mahmoud.jpg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setSuccessMessage(
+      isEn 
+        ? 'Downloaded dr-mahmoud.jpg! Place this file into the "public/" folder of your GitHub repository so all visitors see it on GitHub Pages.'
+        : 'تم تنزيل ملف dr-mahmoud.jpg! ضعه داخل مجلد "public/" بمستودع GitHub الخاص بك ليظهر لجميع الزوار على GitHub Pages بشكل دائم.'
+    );
+    setTimeout(() => setSuccessMessage(null), 8000);
+  };
+
+  const handleCopyBase64 = () => {
+    if (!currentPhoto) return;
+    navigator.clipboard?.writeText(currentPhoto);
+    setSuccessMessage(
+      isEn 
+        ? 'Image data code copied to clipboard! You can paste it into the chat or save it.' 
+        : 'تم نسخ كود الصورة إلى الحافظة بنجاح! يمكنك لصقه في المحادثة أو الاحتفاظ به.'
+    );
+    setTimeout(() => setSuccessMessage(null), 5000);
   };
 
   return (
@@ -179,8 +220,30 @@ export const DoctorPhotoModal: React.FC = () => {
                   {isEn ? "Active on Website" : "المعروضة حالياً بالموقع"}
                 </div>
               </div>
+
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={handleDownloadPhoto}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                  title={isEn ? "Download image file (dr-mahmoud.jpg)" : "تنزيل ملف الصورة (dr-mahmoud.jpg)"}
+                >
+                  <Download className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{isEn ? "Download JPG" : "تنزيل ملف الصورة"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyBase64}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                  title={isEn ? "Copy base64 code" : "نسخ كود الصورة"}
+                >
+                  <Copy className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{isEn ? "Copy Code" : "نسخ الكود"}</span>
+                </button>
+              </div>
+
               <p className="text-[11px] text-slate-400 mt-2 text-center font-mono">
-                {currentPhoto.startsWith('data:') ? 'Base64 Live Image' : currentPhoto}
+                {currentPhoto.startsWith('data:') ? 'IndexedDB High-Res' : currentPhoto}
               </p>
             </div>
 
@@ -279,6 +342,24 @@ export const DoctorPhotoModal: React.FC = () => {
               {isEn 
                 ? "The photo selected here is applied directly without any AI regeneration, morphing, or modification of facial characteristics, maintaining full clinical credibility and authentic professional identity."
                 : "الصورة التي تختارها هنا تُطبّق بشكل مباشر كملف صورة حقيقي دون أي معالجة توليدية أو تغيير في الملامح بالذكاء الاصطناعي، حفاظاً على المصداقية الطبية الكاملة والهوية الشخصية الموثقة لدكتور محمود."}
+            </p>
+          </div>
+
+          {/* GitHub Pages & Permanent Persistence Guidance */}
+          <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-slate-700 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-emerald-900">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>{isEn ? "Permanent Persistence & GitHub Pages Deployment" : "الحفظ الدائم والنشر على GitHub Pages"}</span>
+            </div>
+            <p className="leading-relaxed text-slate-600">
+              {isEn 
+                ? "• In this browser: The uploaded photo is now saved in IndexedDB and will never disappear even after session ends, cache clearing, or page refreshes."
+                : "• داخل هذا المتصفح: الصورة المحفوظة هنا تُخزن الآن في IndexedDB ولن تختفي أبداً حتى بعد إغلاق الجلسة أو إعادة تشغيل المتصفح."}
+            </p>
+            <p className="leading-relaxed text-slate-600">
+              {isEn
+                ? "• For GitHub Pages: To make the photo permanent for all external internet visitors, click 'Download JPG' and place the file in 'public/dr-mahmoud.jpg' in your GitHub repository, or attach the original image file directly here in our chat!"
+                : "• لموقعك على GitHub Pages: لتظهر الصورة لجميع الزوار على الإنترنت بشكل دائم، اضغط زر 'تنزيل ملف الصورة' وضع الملف داخل 'public/dr-mahmoud.jpg' في مستودع GitHub، أو أرفق ملف الصورة الأصلية هنا مباشرة في الشات وسأدمجه لك فوراً في ملفات المشروع."}
             </p>
           </div>
         </div>

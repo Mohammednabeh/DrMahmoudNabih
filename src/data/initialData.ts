@@ -1,5 +1,8 @@
 import { Category, Article, FAQItem, SiteSettings, ExperienceItem, QualificationItem, LicenseItem, SkillItem } from '../types';
 import { articleImages } from './articleImages';
+import drMahmoudDefaultPhoto from '../assets/images/dr_mahmoud_photo_1788368502061.jpg';
+
+export { drMahmoudDefaultPhoto };
 
 export const initialCategories: Category[] = [
   {
@@ -943,7 +946,7 @@ export const initialSiteSettings: SiteSettings = {
   locationAr: 'الدمام، المملكة العربية السعودية',
   locationEn: 'Dammam, Saudi Arabia',
   linkedinUrl: '',
-  doctorPhotoUrl: '/dr-mahmoud.jpg'
+  doctorPhotoUrl: drMahmoudDefaultPhoto
 };
 
 export const initialExperiences: ExperienceItem[] = [

@@ -13,6 +13,12 @@ import {
   initialFAQ, 
   initialSiteSettings 
 } from '../data/initialData';
+import { 
+  optimizePhoto, 
+  savePhotoToIndexedDB, 
+  getPhotoFromIndexedDB, 
+  clearPhotoFromIndexedDB 
+} from '../utils/photoStorage';
 
 interface CMSContextType {
   language: Language;
@@ -447,11 +453,34 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
-      return saved ? { ...initialSiteSettings, ...JSON.parse(saved) } : initialSiteSettings;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (!parsed.doctorPhotoUrl || parsed.doctorPhotoUrl === '/dr-mahmoud.jpg' || parsed.doctorPhotoUrl.includes('unsplash.com')) {
+          parsed.doctorPhotoUrl = initialSiteSettings.doctorPhotoUrl;
+        }
+        return { ...initialSiteSettings, ...parsed };
+      }
+      return initialSiteSettings;
     } catch {
       return initialSiteSettings;
     }
   });
+
+  // Check and restore doctor photo from IndexedDB on initial load
+  useEffect(() => {
+    getPhotoFromIndexedDB().then((idbPhoto) => {
+      if (idbPhoto && idbPhoto.startsWith('data:image/')) {
+        setSiteSettings(prev => {
+          if (prev.doctorPhotoUrl !== idbPhoto) {
+            return { ...prev, doctorPhotoUrl: idbPhoto };
+          }
+          return prev;
+        });
+      }
+    }).catch((err) => {
+      console.warn('IndexedDB photo restore check notice:', err);
+    });
+  }, []);
 
   // Sync document lang and dir attribute
   useEffect(() => {
@@ -538,6 +567,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setArticles(initialArticles);
     setFaqs(initialFAQ);
     setSiteSettings(initialSiteSettings);
+    clearPhotoFromIndexedDB().catch(() => {});
     try {
       localStorage.removeItem(STORAGE_KEY_ARTICLES);
       localStorage.removeItem(STORAGE_KEY_CATEGORIES);
@@ -559,35 +589,35 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, null, 2);
   };
 
-  const uploadDoctorPhoto = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string;
-        if (!dataUrl) {
-          reject(new Error('Failed to read image file'));
-          return;
-        }
+  const uploadDoctorPhoto = async (file: File): Promise<string> => {
+    try {
+      // 1. Optimize & compress the image (~100-150KB high-res JPEG) so it fits in all storage types
+      const optimizedDataUrl = await optimizePhoto(file, 900, 1200, 0.88);
+      if (!optimizedDataUrl) {
+        throw new Error('Failed to read or optimize image');
+      }
 
-        // 1. Immediately update client state and localStorage
-        updateSiteSettings({ doctorPhotoUrl: dataUrl });
+      // 2. Persist to IndexedDB (survives session ends, incognito, cache clearing)
+      await savePhotoToIndexedDB(optimizedDataUrl);
 
-        // 2. Persist to server disk in public/dr-mahmoud.jpg & dist/dr-mahmoud.jpg
-        try {
-          await fetch('/api/upload-doctor-photo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ base64: dataUrl })
-          });
-        } catch (err) {
-          console.warn('Dev server file write notice (persisted in local state):', err);
-        }
+      // 3. Update client state & localStorage
+      updateSiteSettings({ doctorPhotoUrl: optimizedDataUrl });
 
-        resolve(dataUrl);
-      };
-      reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(file);
-    });
+      // 4. Persist to server disk in public/dr-mahmoud.jpg & dist/dr-mahmoud.jpg
+      try {
+        await fetch('/api/upload-doctor-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64: optimizedDataUrl })
+        });
+      } catch (err) {
+        console.warn('Server disk write attempt notice (persisted in IndexedDB & local state):', err);
+      }
+
+      return optimizedDataUrl;
+    } catch (err: any) {
+      throw new Error(err?.message || 'Failed to process image file');
+    }
   };
 
   // Automatically ensure client's custom photo is persisted as the server's default photo

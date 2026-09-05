@@ -2,6 +2,7 @@ import React from 'react';
 import { useCMS } from '../context/CMSContext';
 import { useArticleSEO } from '../hooks/useArticleSEO';
 import { ArticleSEOCard } from './ArticleSEOCard';
+import { drMahmoudDefaultPhoto } from '../data/initialData';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -123,9 +124,15 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ slug, onBa
         {/* Author Byline */}
         <div className="flex items-center gap-3 pt-2">
           <img
-            src={siteSettings.doctorPhotoUrl || '/dr-mahmoud.jpg'}
+            src={siteSettings.doctorPhotoUrl || drMahmoudDefaultPhoto}
             alt={isEn ? "Dr. Mahmoud Ali Nabih" : "د. محمود علي نبيه"}
             className="w-10 h-10 rounded-full object-cover border border-slate-200"
+            onError={(e) => {
+              const img = e.target as HTMLImageElement;
+              if (img.src !== drMahmoudDefaultPhoto) {
+                img.src = drMahmoudDefaultPhoto;
+              }
+            }}
           />
           <div>
             <div className="text-sm font-bold text-slate-900">

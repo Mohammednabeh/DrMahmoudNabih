@@ -29,6 +29,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Article, FAQItem } from '../types';
+import { drMahmoudDefaultPhoto } from '../data/initialData';
 
 export const CMSStudioModal: React.FC = () => {
   const {
@@ -508,9 +509,15 @@ export const CMSStudioModal: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-20 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
                     <img
-                      src={siteSettings.doctorPhotoUrl || '/dr-mahmoud.jpg'}
+                      src={siteSettings.doctorPhotoUrl || drMahmoudDefaultPhoto}
                       alt={isEn ? "Dr. Mahmoud Ali Nabih" : "د. محمود علي نبيه"}
                       className="w-full h-full object-cover object-top"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        if (img.src !== drMahmoudDefaultPhoto) {
+                          img.src = drMahmoudDefaultPhoto;
+                        }
+                      }}
                     />
                   </div>
                   <div>
