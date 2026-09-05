@@ -11,8 +11,26 @@ export default defineConfig(() => {
       react(), 
       tailwindcss(),
       {
-        name: 'photo-upload-handler',
+        name: 'api-handler',
         configureServer(server) {
+          server.middlewares.use('/api/health', (req, res) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: 'ok' }));
+          });
+
+          server.middlewares.use('/api/site-settings', (req, res) => {
+            const dataDir = path.resolve(__dirname, 'data');
+            const settingsFilePath = path.resolve(dataDir, 'server-settings.json');
+            let settings = {};
+            try {
+              if (fs.existsSync(settingsFilePath)) {
+                settings = JSON.parse(fs.readFileSync(settingsFilePath, 'utf-8'));
+              }
+            } catch (e) {}
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, settings }));
+          });
+
           server.middlewares.use('/api/upload-doctor-photo', (req, res) => {
             if (req.method === 'POST') {
               let body = '';
@@ -40,9 +58,21 @@ export default defineConfig(() => {
                   if (fs.existsSync(distDir)) {
                     fs.writeFileSync(path.resolve(distDir, 'dr-mahmoud.jpg'), buffer);
                   }
+
+                  const dataDir = path.resolve(__dirname, 'data');
+                  if (!fs.existsSync(dataDir)) {
+                    fs.mkdirSync(dataDir, { recursive: true });
+                  }
+                  const settingsPath = path.resolve(dataDir, 'server-settings.json');
+                  const settings = {
+                    doctorPhotoUrl: `/dr-mahmoud.jpg?v=${Date.now()}`,
+                    doctorPhotoBase64: data.base64,
+                    doctorPhotoUpdatedAt: new Date().toISOString()
+                  };
+                  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
                   
                   res.writeHead(200, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ success: true, path: '/dr-mahmoud.jpg' }));
+                  res.end(JSON.stringify({ success: true, path: '/dr-mahmoud.jpg', doctorPhotoUrl: settings.doctorPhotoUrl }));
                 } catch (e: any) {
                   res.writeHead(500, { 'Content-Type': 'application/json' });
                   res.end(JSON.stringify({ error: e.message }));
